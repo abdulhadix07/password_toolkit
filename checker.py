@@ -18,26 +18,19 @@ def evaluate_password(password: str, common_passwords: set[str] | None = None) -
     if not isinstance(password, str):
         raise TypeError("Password must be a string.")
 
-    common_set = common_passwords if common_passwords is not None else load_common_passwords()
-    normalized = password.strip().lower()
-    length = len(password)
-
-    has_lower = any(ch.islower() for ch in password)
-    has_upper = any(ch.isupper() for ch in password)
-    has_digit = any(ch.isdigit() for ch in password)
-    has_symbol = any(not ch.isalnum() for ch in password)
-    variety_count = sum([has_lower, has_upper, has_digit, has_symbol])
-
-    tips: list[str] = []
-
-    if length == 0:
+    if not password.strip():
         return {
             "rating": "Weak",
             "score": 0,
             "tips": ["Enter a password or passphrase of at least 12 characters."],
         }
 
-    if normalized in common_set:
+    common_set = common_passwords if common_passwords is not None else load_common_passwords()
+    normalized = password.strip().lower()
+    base_word = normalized.rstrip("0123456789!@#$%^&*()-_=+[]{}:,.?")
+    length = len(password)
+
+    if normalized in common_set or base_word in common_set:
         return {
             "rating": "Weak",
             "score": 1,
@@ -47,7 +40,14 @@ def evaluate_password(password: str, common_passwords: set[str] | None = None) -
             ],
         }
 
-    # Layer 1: Length (primary driver)
+    has_lower = any(ch.islower() for ch in password)
+    has_upper = any(ch.isupper() for ch in password)
+    has_digit = any(ch.isdigit() for ch in password)
+    has_symbol = any(not ch.isalnum() for ch in password)
+    variety_count = sum([has_lower, has_upper, has_digit, has_symbol])
+
+    tips: list[str] = []
+
     if length < 8:
         score = 1
         tips.append("Increase length to at least 12 characters (12–16+ is much stronger).")
@@ -59,7 +59,6 @@ def evaluate_password(password: str, common_passwords: set[str] | None = None) -
     else:
         score = 6
 
-    # Layer 2: Character variety (secondary boost; long passphrases can still score Strong)
     if variety_count >= 3:
         score += 2
     elif variety_count == 2:
@@ -80,8 +79,4 @@ def evaluate_password(password: str, common_passwords: set[str] | None = None) -
     if not tips:
         tips.append("Strong length and structure—keep it unique to this account and store it in a password manager.")
 
-    return {
-        "rating": rating,
-        "score": score,
-        "tips": tips,
-    }
+    return {"rating": rating, "score": score, "tips": tips}
