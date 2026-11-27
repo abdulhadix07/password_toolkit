@@ -5,6 +5,7 @@ LOWERCASE = string.ascii_lowercase
 UPPERCASE = string.ascii_uppercase
 DIGITS = string.digits
 SYMBOLS = "!@#$%^&*()-_=+[]{}:,.?"
+MIN_PASSWORD_LENGTH = 8
 
 
 def generate_password(
@@ -27,7 +28,7 @@ def generate_password(
     if not selected_pools:
         raise ValueError("At least one character set must be enabled.")
 
-    min_length = len(selected_pools)
+    min_length = max(MIN_PASSWORD_LENGTH, len(selected_pools))
     if length < min_length:
         raise ValueError(f"Length must be at least {min_length} for the selected character sets.")
 
@@ -35,8 +36,7 @@ def generate_password(
     chars: list[str] = [secrets.choice(pool) for pool in selected_pools]
 
     full_pool = "".join(selected_pools)
-    remaining = length - len(chars)
-    for _ in range(remaining):
+    for _ in range(length - len(chars)):
         chars.append(secrets.choice(full_pool))
 
     rng.shuffle(chars)
